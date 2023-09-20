@@ -20,18 +20,49 @@
             <span class="@(Grid.ExpandedGroupItemStyle(this, Grid.allGroupsExpanded != null ? Grid.allGroupsExpanded : rowArgs.Item1.Expanded))"></span>
         </a>
     </td>
-    <td colspan="@(TotalColumnCount + Grid.Groups.Count - 1 - Group.Level + (Grid.Template != null && Grid.ShowExpandColumn ? 1 : 0))">
-        <span class="rz-cell-data">
-            @if (Grid.GroupHeaderTemplate != null)
-            {
-                @Grid.GroupHeaderTemplate(Group)
-            }
-            else if(Group.GroupDescriptor != null)
-            {
-                @(Group.GroupDescriptor.GetTitle() + ": " + (Group.Data.Key != null ? Group.Data.Key.ToString() : ""))
-            }
-        </span>
-    </td>
+    @if (Columns.FirstOrDefault(c => c.GroupHeaderTemplate != null) != null)
+    {
+        int index = Columns.IndexOf(Columns.FirstOrDefault(c => c.GroupHeaderTemplate != null));
+        <td colspan="@(Grid.Groups.Count - 1 - Group.Level + index)">
+            <span class="rz-cell-data">
+                @if (Grid.GroupHeaderTemplate != null)
+                {
+                    @Grid.GroupHeaderTemplate(Group)
+                }
+                else if (Group.GroupDescriptor != null)
+                {
+                    @(Group.GroupDescriptor.GetTitle() + ": " + (Group.Data.Key != null ? Group.Data.Key.ToString() : ""))
+                }
+            </span>
+        </td>
+        @for (;index<Columns.Count;index++)
+        {
+            RadzenDataGridColumn<TItem> column = Columns[index];
+            <td style="@column.GetStyle(true)">
+                <span class="rz-cell-data">
+                    @if (column.GroupHeaderTemplate != null)
+                    {
+                        @column.GroupHeaderTemplate(Group)
+                    }
+                </span>
+            </td>
+        }
+    }
+    else
+    {
+        <td colspan="@(TotalColumnCount + Grid.Groups.Count - 1 - Group.Level + (Grid.Template != null && Grid.ShowExpandColumn ? 1 : 0))">
+            <span class="rz-cell-data">
+                @if (Grid.GroupHeaderTemplate != null)
+                {
+                    @Grid.GroupHeaderTemplate(Group)
+                }
+                else if(Group.GroupDescriptor != null)
+                {
+                    @(Group.GroupDescriptor.GetTitle() + ": " + (Group.Data.Key != null ? Group.Data.Key.ToString() : ""))
+                }
+            </span>
+        </td>
+    }
 </tr>
 @if(Grid != null)
 {
@@ -94,8 +125,8 @@
                    .Where(c => c.GetVisible())
                    .ToList();
             return columnsOfGrid.Sum(c => CountVisibleLeafColumns<TItem>(c));
-            }
         }
+    }
 
         [Parameter]
         public RadzenDataGrid<TItem> Grid { get; set; }
