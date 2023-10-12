@@ -50,7 +50,8 @@ namespace Radzen
             {FilterOperator.IsNull, "=="},
             {FilterOperator.IsEmpty, "=="},
             {FilterOperator.IsNotNull, "!="},
-            {FilterOperator.IsNotEmpty, "!="}
+            {FilterOperator.IsNotEmpty, "!="},
+            {FilterOperator.Custom, ""}
         };
 
         /// <summary>
@@ -73,7 +74,8 @@ namespace Radzen
             {FilterOperator.IsNotNull, "ne"},
             {FilterOperator.IsNotEmpty, "ne"},
             {FilterOperator.In, "in"},
-            {FilterOperator.NotIn, "in"}
+            {FilterOperator.NotIn, "in"},
+            {FilterOperator.Custom, ""}
         };
 
         /// <summary>
@@ -384,6 +386,11 @@ namespace Radzen
             }
 
             var columnFilterOperator = !second ? column.GetFilterOperator() : column.GetSecondFilterOperator();
+
+            if (columnFilterOperator == FilterOperator.Custom)
+            {
+                return "";
+            }
 
             var linqOperator = LinqFilterOperators[columnFilterOperator];
             if (linqOperator == null)

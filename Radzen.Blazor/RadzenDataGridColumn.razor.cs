@@ -308,6 +308,22 @@ namespace Radzen.Blazor
         public object FilterValue { get; set; }
 
         /// <summary>
+        /// Gets or sets the filter placeholder.
+        /// </summary>
+        /// <value>The filter placeholder value.</value>
+        [Parameter]
+        public string FilterPlaceholder { get; set; }
+        
+        /// <summary>
+        /// Gets the filter placeholder.
+        /// </summary>
+        /// <returns>System.String.</returns>
+        public string GetFilterPlaceholder()
+        {
+            return FilterPlaceholder ?? string.Empty;
+        }
+        
+        /// <summary>
         /// Gets or sets the second filter value.
         /// </summary>
         /// <value>The second filter value.</value>
@@ -942,7 +958,7 @@ namespace Radzen.Blazor
         {
             SetFilterValue(value, isFirst);
             Grid.SaveSettings();
-            await Grid.Reload();
+            await Grid.FirstPage(true);
         }
 
         internal bool CanSetFilterValue()
@@ -965,7 +981,11 @@ namespace Radzen.Blazor
 
             FilterValue = null;
             SecondFilterValue = null;
-            FilterOperator = typeof(System.Collections.IEnumerable).IsAssignableFrom(FilterPropertyType) ? FilterOperator.Contains : default(FilterOperator);
+            FilterOperator = FilterOperator == FilterOperator.Custom
+                ? FilterOperator.Custom
+                : typeof(System.Collections.IEnumerable).IsAssignableFrom(FilterPropertyType)
+                    ? FilterOperator.Contains
+                    : default(FilterOperator);
             SecondFilterOperator = default(FilterOperator);
             LogicalFilterOperator = default(LogicalFilterOperator);
         }

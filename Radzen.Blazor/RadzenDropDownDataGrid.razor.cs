@@ -368,7 +368,7 @@ namespace Radzen.Blazor
                 {
                     string filterCaseSensitivityOperator = FilterCaseSensitivity == FilterCaseSensitivity.CaseInsensitive ? ".ToLower()" : "";
 
-                    if (AllowFilteringByAllStringColumns)
+                    if (AllowFilteringByAllStringColumns && grid != null)
                     {
                         if (AllowFilteringByWord)
                         {
@@ -754,6 +754,17 @@ namespace Radzen.Blazor
             finally
             {
                 clicking = false;
+            }
+        }
+
+        /// <summary>
+        /// Handles the reference to the DataGrid component.
+        /// </summary>
+        public RadzenDataGrid<object> DataGrid
+        {
+            get
+            {
+                return grid;
             }
         }
     }
