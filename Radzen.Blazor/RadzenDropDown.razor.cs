@@ -31,6 +31,13 @@ namespace Radzen.Blazor
         /// <value>The value template.</value>
         [Parameter]
         public RenderFragment<dynamic> ValueTemplate { get; set; }
+        
+        /// <summary>
+        /// Gets or sets the empty template.
+        /// </summary>
+        /// <value>The empty template.</value>
+        [Parameter]
+        public RenderFragment EmptyTemplate { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether popup should open on focus. Set to <c>false</c> by default.
@@ -45,6 +52,13 @@ namespace Radzen.Blazor
         /// <value><c>true</c> if need to be cleared; otherwise, <c>false</c>.</value>
         [Parameter]
         public bool ClearSearchAfterSelection { get; set; }
+
+        /// <summary>
+        /// Gets or sets the filter placeholder.
+        /// </summary>
+        /// <value>The filter placeholder.</value>
+        [Parameter]
+        public string FilterPlaceholder { get; set; } = string.Empty;
 
         private async Task OnFocus(Microsoft.AspNetCore.Components.Web.FocusEventArgs args)
         {
