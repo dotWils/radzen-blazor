@@ -413,6 +413,43 @@ namespace Radzen.Blazor
                 "rz-listbox-item  rz-state-highlight" :
                 "rz-listbox-item ";
         }
+        
+        int focusedIndex = -1;
+        /// <summary>
+        /// Handles the <see cref="E:KeyDown" /> event.
+        /// </summary>
+        /// <param name="args">The <see cref="KeyboardEventArgs"/> instance containing the event data.</param>
+        protected virtual async Task OnKeyDown(KeyboardEventArgs args)
+        {
+            var items = PagedView.ToList();
+
+            var key = args.Code != null ? args.Code : args.Key;
+
+            if (key == "ArrowDown" || key == "ArrowUp")
+            {
+                try
+                {
+                    var newFocusedIndex = await JSRuntime.InvokeAsync<int>("Radzen.focusTableRow", UniqueID, key == "ArrowDown", focusedIndex, SelectionMode == DataGridSelectionMode.Multiple && args.ShiftKey);
+                    var itemToSelect = items.ElementAtOrDefault(newFocusedIndex);
+
+                    if (newFocusedIndex != focusedIndex && itemToSelect != null)
+                    {
+                        focusedIndex = newFocusedIndex;
+
+                        if (SelectionMode == DataGridSelectionMode.Multiple && !args.ShiftKey)
+                        {
+                            selectedItems.Clear();
+                        }
+
+                        await SelectRow(itemToSelect, false);
+                    }
+                }
+                catch (Exception)
+                {
+                    //
+                }
+            }
+        }
 
         /// <summary>
         /// Called when filter key pressed.
@@ -2084,7 +2121,10 @@ namespace Radzen.Blazor
 
                     case nameof(AllGroupsExpanded):
                         allGroupsExpandedChanged = HasChanged(parameter.Value, AllGroupsExpanded);
-                        allGroupsExpanded = (bool?)parameter.Value;
+                        if (allGroupsExpandedChanged)
+                        {
+                            allGroupsExpanded = (bool?)parameter.Value;
+                        }
                         break;
 
                     case nameof(Value):
@@ -2385,12 +2425,14 @@ namespace Radzen.Blazor
 
         internal async System.Threading.Tasks.Task OnRowSelect(TItem item, bool raiseChange = true)
         {
+            focusedIndex = PagedView.ToList().IndexOf(item);
+
             if (SelectionMode == DataGridSelectionMode.Single && item != null && selectedItems.Keys.Any(i => ItemEquals(i, item)))
             {
                 // Legacy RowSelect raise
                 if (raiseChange)
                 {
-                    await RowSelect.InvokeAsync((TItem)item);
+                    await RowSelect.InvokeAsync(item);
                 }
                 return;
             }
@@ -2409,29 +2451,27 @@ namespace Radzen.Blazor
             {
                 if (!selectedItems.Keys.Any(i => ItemEquals(i, item)))
                 {
-                    selectedItems.Add((TItem)item, true);
+                    selectedItems.Add(item, true);
                     if (raiseChange)
                     {
-                        await RowSelect.InvokeAsync((TItem)item);
+                        await RowSelect.InvokeAsync(item);
                     }
                 }
                 else
                 {
-                    selectedItems.Remove((TItem)item);
-                    await RowDeselect.InvokeAsync((TItem)item);
+                    selectedItems.Remove(item);
+                    await RowDeselect.InvokeAsync(item);
                 }
             }
             else
             {
                 if (raiseChange)
                 {
-                    await RowSelect.InvokeAsync((TItem)item);
+                    await RowSelect.InvokeAsync(item);
                 }
             }
 
-            var value = selectedItems.Keys;
-
-            _value = SelectionMode == DataGridSelectionMode.Multiple ? new List<TItem>(value) : new List<TItem>() { value.FirstOrDefault() };
+            _value = selectedItems.Keys.ToList();
 
             await ValueChanged.InvokeAsync(_value);
 
@@ -3147,7 +3187,7 @@ namespace Radzen.Blazor
                             }
 
                             // Filtering
-                            if (!object.Equals(gridColumn.GetFilterValue(), GetFilterValue(column.FilterValue, gridColumn.FilterPropertyType)))
+                            if (!AreObjectsEqual(gridColumn.GetFilterValue(), GetFilterValue(column.FilterValue, gridColumn.FilterPropertyType)))
                             {
                                 gridColumn.SetFilterValue(GetFilterValue(column.FilterValue, gridColumn.FilterPropertyType));
                                 shouldUpdateState = true;
@@ -3159,7 +3199,7 @@ namespace Radzen.Blazor
                                 shouldUpdateState = true;
                             }
 
-                            if (!object.Equals(gridColumn.GetSecondFilterValue(), GetFilterValue(column.SecondFilterValue, gridColumn.FilterPropertyType)))
+                            if (!AreObjectsEqual(gridColumn.GetSecondFilterValue(), GetFilterValue(column.SecondFilterValue, gridColumn.FilterPropertyType)))
                             {
                                 gridColumn.SetFilterValue(GetFilterValue(column.SecondFilterValue, gridColumn.FilterPropertyType), false);
                                 shouldUpdateState = true;
@@ -3220,7 +3260,42 @@ namespace Radzen.Blazor
             }
         }
 
-        object GetFilterValue(object value, Type type)
+		/// <summary>
+		/// Compares two objects for equality.
+		/// </summary>
+		/// <param name="object1">The first object to compare.</param>
+		/// <param name="object2">The second object to compare.</param>
+		/// <returns>True if the objects are equal, false otherwise.</returns>
+		private static bool AreObjectsEqual(object object1, object object2)
+		{
+			// If both objects are null, they are considered equal
+			if (object1 == null && object2 == null)
+			{
+				return true;
+			}
+
+			// If only one of the objects is null, they are considered not equal
+			if (object1 == null || object2 == null)
+			{
+				return false;
+			}
+
+			// If both objects are enumerable, compare their elements
+			if (object1 is IEnumerable list1 && object2 is IEnumerable list2)
+			{
+				// Create hash sets from the enumerable objects
+				var set1 = new HashSet<object>(list1.Cast<object>());
+				var set2 = new HashSet<object>(list2.Cast<object>());
+
+				// Check if the hash sets are equal
+				return set1.SetEquals(set2);
+			}
+
+			// If the objects are not enumerable, compare them using the Equals method
+			return object1.Equals(object2);
+		}
+
+		object GetFilterValue(object value, Type type)
         {
             if (value != null && value is JsonElement)
             {
