@@ -261,6 +261,20 @@ namespace Radzen.Blazor
         public EventCallback<Radzen.DataGridLoadChildDataEventArgs<TItem>> LoadChildData { get; set; }
 
         /// <summary>
+        /// Gets or sets the expand child item aria label text.
+        /// </summary>
+        /// <value>The expand child item aria label text.</value>
+        [Parameter]
+        public string ExpandChildItemAriaLabel { get; set; } = "Expand child item";
+
+        /// <summary>
+        /// Gets or sets the expand group aria label text.
+        /// </summary>
+        /// <value>The expand group aria label text.</value>
+        [Parameter]
+        public string ExpandGroupAriaLabel { get; set; } = "Expand group";
+
+        /// <summary>
         /// Gets or sets a value indicating whether DataGrid data cells will follow the header cells structure in composite columns.
         /// </summary>
         /// <value><c>true</c> if DataGrid data cells will follow the header cells structure in composite columns; otherwise, <c>false</c>.</value>
@@ -413,7 +427,8 @@ namespace Radzen.Blazor
                 "rz-listbox-item  rz-state-highlight" :
                 "rz-listbox-item ";
         }
-        
+
+        bool preventKeyDown = false;
         int focusedIndex = -1;
         /// <summary>
         /// Handles the <see cref="E:KeyDown" /> event.
@@ -427,6 +442,7 @@ namespace Radzen.Blazor
 
             if (key == "ArrowDown" || key == "ArrowUp")
             {
+                preventKeyDown = true;
                 try
                 {
                     var newFocusedIndex = await JSRuntime.InvokeAsync<int>("Radzen.focusTableRow", UniqueID, key == "ArrowDown", focusedIndex, SelectionMode == DataGridSelectionMode.Multiple && args.ShiftKey);
@@ -448,6 +464,10 @@ namespace Radzen.Blazor
                 {
                     //
                 }
+            }
+            else
+            {
+                preventKeyDown = false;
             }
         }
 
@@ -680,6 +700,7 @@ namespace Radzen.Blazor
                 builder.AddAttribute(1, "Value", isFirst ? column.GetFilterValue() : column.GetSecondFilterValue());
                 builder.AddAttribute(2, "ShowUpDown", column.ShowUpDownForNumericFilter());
                 builder.AddAttribute(3, "Style", "width:100%");
+                builder.AddAttribute(4, "InputAttributes", new Dictionary<string,object>(){ { "aria-label", column.Title + $"{(!isFirst ? " second " : " ")}filter value " + (isFirst ? column.GetFilterValue() : column.GetSecondFilterValue()) } });
 
                 Action<object> action;
                 if (force)
@@ -1336,6 +1357,55 @@ namespace Radzen.Blazor
         /// <value>The column picker columns text.</value>
         [Parameter]
         public string ColumnsText { get; set; } = "Columns";
+
+        /// <summary>
+        /// Gets or sets the remove group button aria label text.
+        /// </summary>
+        /// <value>The remove group button aria label text.</value>
+        [Parameter]
+        public string RemoveGroupArialLabel { get; set; } = "Remove group";
+
+        /// <summary>
+        /// Gets or sets the select visible columns aria label text.
+        /// </summary>
+        /// <value>The select visible columns aria label text.</value>
+        [Parameter]
+        public string SelectVisibleColumnsArialLabel { get; set; } = "select visible columns";
+
+        /// <summary>
+        /// Gets or sets the column logical filter value aria label text.
+        /// </summary>
+        /// <value>The the column logical filter value aria label text.</value>
+        [Parameter]
+        public string LogicalOperatorArialLabel { get; set; } = " logical filter operator ";
+
+        /// <summary>
+        /// Gets or sets the column filter value aria label text.
+        /// </summary>
+        /// <value>The the column filter value aria label text.</value>
+        [Parameter]
+        public string FilterOperatorArialLabel { get; set; } = " filter operator ";
+
+        /// <summary>
+        /// Gets or sets the column filter value aria label text.
+        /// </summary>
+        /// <value>The the column filter value aria label text.</value>
+        [Parameter]
+        public string SecondFilterOperatorArialLabel { get; set; } = " second filter operator ";
+
+        /// <summary>
+        /// Gets or sets the column filter value aria label text.
+        /// </summary>
+        /// <value>The the column filter value aria label text.</value>
+        [Parameter]
+        public string FilterValueArialLabel { get; set; } = " filter value ";
+
+        /// <summary>
+        /// Gets or sets the column filter value aria label text.
+        /// </summary>
+        /// <value>The the column filter value aria label text.</value>
+        [Parameter]
+        public string SecondFilterValueArialLabel { get; set; } = " second filter value ";
 
         /// <summary>
         /// Gets or sets a value indicating whether user can pick all columns in column picker.
@@ -2459,7 +2529,11 @@ namespace Radzen.Blazor
                 }
                 else
                 {
-                    selectedItems.Remove(item);
+                    var itemToRemove = selectedItems.Keys.FirstOrDefault(i => ItemEquals(i, item));
+                    if (itemToRemove != null)
+                    {
+                        selectedItems.Remove(itemToRemove);
+                    }
                     await RowDeselect.InvokeAsync(item);
                 }
             }
