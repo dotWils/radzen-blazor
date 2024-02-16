@@ -526,7 +526,7 @@ window.Radzen = {
       if (!table.rows[table.nextSelectedIndex].classList.contains('rz-state-highlight')) {
         table.rows[table.nextSelectedIndex].classList.add('rz-state-highlight');
       }
-     
+
       table.parentNode.parentNode.scrollTop = table.rows[table.nextSelectedIndex].offsetTop - table.rows[table.nextSelectedIndex].offsetHeight;
     }
 
@@ -713,7 +713,7 @@ window.Radzen = {
         }
       }
   },
-  numericKeyPress: function (e, isInteger) {
+  numericKeyPress: function (e, isInteger, decimalSeparator) {
     if (
       e.metaKey ||
       e.ctrlKey ||
@@ -721,6 +721,12 @@ window.Radzen = {
       e.keyCode == 8 ||
       e.keyCode == 13
     ) {
+      return;
+      }
+
+    if (e.code === 'NumpadDecimal') {
+      e.target.value += decimalSeparator;
+      e.preventDefault();
       return;
     }
 
@@ -893,8 +899,11 @@ window.Radzen = {
     Radzen[id] = function (e) {
         var lastPopup = Radzen.popups && Radzen.popups[Radzen.popups.length - 1];
         var currentPopup = lastPopup != null && document.getElementById(lastPopup.id) || popup;
-        currentPopup.instance = lastPopup.instance;
-        currentPopup.callback = lastPopup.callback;
+
+        if (lastPopup) {
+            currentPopup.instance = lastPopup.instance;
+            currentPopup.callback = lastPopup.callback;
+        }
 
         if(e.type == 'contextmenu' || !e.target || !closeOnDocumentClick) return;
         if (!/Android/i.test(navigator.userAgent) &&
@@ -1185,7 +1194,7 @@ window.Radzen = {
       arg instanceof Element || arg instanceof HTMLDocument
         ? arg
         : document.getElementById(arg);
-    return input ? input.value : '';
+    return input && input.value != '' ? input.value : null;
   },
   setInputValue: function (arg, value) {
     var input =
@@ -1693,7 +1702,15 @@ window.Radzen = {
           },
           mouseMoveHandler: function (e) {
               if (Radzen[el]) {
-                  var width = (Radzen[el].width - (Radzen[el].clientX - e.clientX)) + 'px';
+                  var widthFloat = (Radzen[el].width - (Radzen[el].clientX - e.clientX));
+                  var minWidth = parseFloat(cell.style.minWidth || 0)
+
+                  if (widthFloat < minWidth) {
+                      widthFloat = minWidth;
+                  }
+
+                  var width = widthFloat + 'px';
+
                   if (cell) {
                       cell.style.width = width;
                   }

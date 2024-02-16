@@ -92,6 +92,7 @@ namespace Radzen.Blazor
         }
 
         string lastLoadDataArgs;
+        Task lastLoadDataTask = Task.CompletedTask;
         private async ValueTask<Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<TItem>> LoadItems(Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderRequest request)
         {
             var view = AllowPaging ? PagedView : View;
@@ -108,14 +109,14 @@ namespace Radzen.Blazor
 
             if (lastLoadDataArgs != loadDataArgs)
             {
-                lastLoadDataArgs = loadDataArgs;
+                await (lastLoadDataTask = InvokeLoadData(request.StartIndex, top));
 
-                await InvokeLoadData(request.StartIndex, top);
+                lastLoadDataArgs = loadDataArgs;
             }
 
             var totalItemsCount = LoadData.HasDelegate ? Count : view.Count();
 
-            virtualDataItems = (LoadData.HasDelegate ? Data : itemToInsert != null ? (new[] { itemToInsert }).Concat(view.Skip(request.StartIndex).Take(top)) : view.Skip(request.StartIndex).Take(top))?.ToList();
+            virtualDataItems = (LoadData.HasDelegate ? Data : itemsToInsert.Count() > 0 ? itemsToInsert.ToList().Concat(view.Skip(request.StartIndex).Take(top)) : view.Skip(request.StartIndex).Take(top))?.ToList();
 
             return new Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<TItem>(virtualDataItems, totalItemsCount);
         }
@@ -527,6 +528,12 @@ namespace Radzen.Blazor
         [Parameter]
         public RenderFragment HeaderTemplate { get; set; } 
 
+        /// <summary>
+        /// Gives the grid a custom footer, allowing the adding of components to create custom tool bars or custom pagination
+        /// </summary>
+        [Parameter]
+        public RenderFragment FooterTemplate { get; set; }
+
         internal object selectedColumns;
 
         /// <summary>
@@ -827,31 +834,36 @@ namespace Radzen.Blazor
         [Parameter]
         public EventCallback<DataGridColumnSortEventArgs<TItem>> Sort { get; set; }
 
-        internal void OnSort(EventArgs args, RadzenDataGridColumn<TItem> column)
+        internal async Task OnSort(EventArgs args, RadzenDataGridColumn<TItem> column)
         {
             if (AllowSorting && column.Sortable)
             {
-                var property = column.GetSortProperty();
-                if (!string.IsNullOrEmpty(property))
+                if (GotoFirstPageOnSort)
                 {
-                    OrderBy(property);
+                    topPager?.FirstPage();
+                    bottomPager?.FirstPage();
+                    CurrentPage = 0;
                 }
-                else
+
+                var property = column.GetSortProperty();
+
+                SetColumnSortOrder(column);
+                await Sort.InvokeAsync(new DataGridColumnSortEventArgs<TItem>() { Column = column, SortOrder = column.GetSortOrder() });
+                SaveSettings();
+
+                if (LoadData.HasDelegate && IsVirtualizationAllowed())
                 {
-                    SetColumnSortOrder(column);
-
-                    Sort.InvokeAsync(new DataGridColumnSortEventArgs<TItem>() { Column = column, SortOrder = column.GetSortOrder() });
-                    SaveSettings();
-
-                    if (LoadData.HasDelegate && IsVirtualizationAllowed())
-                    {
-                        Data = null;
+                    Data = null;
 #if NET5_0_OR_GREATER
-                        ResetLoadData();
+                    ResetLoadData();
 #endif
-                    }
+                }
 
-                    InvokeAsync(ReloadInternal);
+                await InvokeAsync(ReloadInternal);
+
+                if (IsVirtualizationAllowed())
+                {
+                    StateHasChanged();
                 }
             }
         }
@@ -2263,6 +2275,7 @@ namespace Radzen.Blazor
         {
             if (firstRender && Visible && (LoadData.HasDelegate && Data == null) && IsVirtualizationAllowed())
             {
+                await Task.Yield();
                 Data = Enumerable.Empty<TItem>().Append(default(TItem));
             }
             else if(settings == null)
@@ -2472,6 +2485,12 @@ namespace Radzen.Blazor
             return column.Columns != null || column.Parent != null;
         }
 
+        /// <summary>
+        /// Gets or sets the ability to automatically goto the first page when sorting is changed.
+        /// </summary>
+        [Parameter]
+        public bool GotoFirstPageOnSort { get; set; } = false;
+
         internal string getCompositeCellCSSClass(RadzenDataGridColumn<TItem> column)
         {
             return column.Columns != null || column.Parent != null ? "rz-composite-cell" : "";
@@ -2624,9 +2643,13 @@ namespace Radzen.Blazor
         /// <param name="item">The item.</param>
         public async System.Threading.Tasks.Task EditRow(TItem item)
         {
-            if(itemToInsert != null)
+            if(itemsToInsert.Count() > 0 && EditMode == DataGridEditMode.Single)
             {
-                CancelEditRow(itemToInsert);
+                var itemsToCancel = itemsToInsert.ToList();
+                foreach( var itemToCancel in itemsToCancel)
+                {
+                    CancelEditRow(itemToCancel);
+                }
             }
 
             await EditRowInternal(item);
@@ -2696,10 +2719,10 @@ namespace Radzen.Blazor
                     editedItems.Remove(item);
                     editContexts.Remove(item);
 
-                    if (object.Equals(itemToInsert, item))
+                    if (itemsToInsert.Contains(item))
                     {
                         await RowCreate.InvokeAsync(item);
-                        itemToInsert = default(TItem);
+                        itemsToInsert.Remove(item);
                     }
                     else
                     {
@@ -2717,7 +2740,7 @@ namespace Radzen.Blazor
         /// <param name="item">The item.</param>
         public void CancelEditRow(TItem item)
         {
-            if (object.Equals(itemToInsert, item))
+            if (itemsToInsert.Contains(item))
             {
                 if(!IsVirtualizationAllowed())
                 {
@@ -2725,13 +2748,13 @@ namespace Radzen.Blazor
                     list.Remove(item);
                     this._view = list.AsQueryable();
                     this.Count--;
-                    itemToInsert = default(TItem);
+                    itemsToInsert.Remove(item);
                     StateHasChanged();
                 }
                 else
                 {
 #if NET5_0_OR_GREATER
-                    itemToInsert = default(TItem);
+                    itemsToInsert.Remove(item);
                     if(virtualize != null)
                     {
                         virtualize.RefreshDataAsync();
@@ -2785,7 +2808,7 @@ namespace Radzen.Blazor
             return editedItems.Keys.Any(i => ItemEquals(i, item));
         }
 
-        TItem itemToInsert;
+        IList<TItem> itemsToInsert = new List<TItem>();
 
         /// <summary>
         /// Inserts new row.
@@ -2793,7 +2816,7 @@ namespace Radzen.Blazor
         /// <param name="item">The item.</param>
         public async System.Threading.Tasks.Task InsertRow(TItem item)
         {
-            itemToInsert = item;
+            itemsToInsert.Add(item);
             if(!IsVirtualizationAllowed())
             {
                 var list = this.PagedView.ToList();
@@ -3431,9 +3454,9 @@ namespace Radzen.Blazor
                 {
                     return element.GetDateTime();
                 }
-                else if (type == typeof(DateTime) || type == typeof(DateTime?))
+                else if (type == typeof(DateTimeOffset) || type == typeof(DateTimeOffset?))
                 {
-                    return element.GetDateTime();
+                    return element.GetDateTimeOffset();
                 }
                 else if (type.IsEnum || Nullable.GetUnderlyingType(type)?.IsEnum == true)
                 {
