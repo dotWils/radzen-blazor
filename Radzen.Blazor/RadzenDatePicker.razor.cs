@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using Radzen.Blazor.Rendering;
 using System;
@@ -380,7 +381,7 @@ namespace Radzen.Blazor
             }
             set
             {
-                if (_value != value)
+                if (!EqualityComparer<object>.Default.Equals(value, _value))
                 {
                     _value = ConvertToTValue(value);
                     _currentDate = default(DateTime);
@@ -613,7 +614,7 @@ namespace Radzen.Blazor
                 }
                 else
                 {
-                    await ValueChanged.InvokeAsync((TValue)Value);
+                    await ValueChanged.InvokeAsync(Value == null ? default(TValue) : (TValue)Value);
                 }
 
                 if (FieldIdentifier.FieldName != null)
@@ -899,16 +900,20 @@ namespace Radzen.Blazor
         /// </summary>
         public void Close()
         {
-            if (PopupRenderMode == PopupRenderMode.OnDemand && !Disabled && !ReadOnly && !Inline)
+            if (Disabled || ReadOnly || Inline)
+                return;
+
+            if (PopupRenderMode == PopupRenderMode.OnDemand)
             {
                 InvokeAsync(() => popup.CloseAsync(Element));
             }
-
-            if (!Disabled)
+            else
             {
-                contentStyle = "display:none;";
-                StateHasChanged();
+                JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID);
             }
+
+            contentStyle = "display:none;";
+            StateHasChanged();
         }
 
         private string PopupStyle
@@ -969,6 +974,9 @@ namespace Radzen.Blazor
                     Close();
                 }
             }
+#if NET5_0_OR_GREATER
+            await FocusAsync();
+#endif
         }
 
         private void SetMonth(int month)
@@ -989,12 +997,12 @@ namespace Radzen.Blazor
 
         private string getOpenPopup()
         {
-            return PopupRenderMode == PopupRenderMode.Initial && !Disabled && !ReadOnly && !Inline ? $"Radzen.togglePopup(this.parentNode, '{PopupID}')" : "";
+            return PopupRenderMode == PopupRenderMode.Initial && !Disabled && !ReadOnly && !Inline ? $"Radzen.togglePopup(this.parentNode, '{PopupID}', false, null, null, true, true)" : "";
         }
 
         private string getOpenPopupForInput()
         {
-            return PopupRenderMode == PopupRenderMode.Initial && !Disabled && !ReadOnly && !Inline && (!AllowInput || !ShowButton) ? $"Radzen.togglePopup(this.parentNode, '{PopupID}')" : "";
+            return PopupRenderMode == PopupRenderMode.Initial && !Disabled && !ReadOnly && !Inline && (!AllowInput || !ShowButton) ? $"Radzen.togglePopup(this.parentNode, '{PopupID}', false, null, null, true, true)" : "";
         }
 
         /// <summary>
@@ -1122,6 +1130,7 @@ namespace Radzen.Blazor
 #endif
             }
         }
+        DateTime FocusedDate { get; set; } = DateTime.Now;
 
         string GetDayCssClass(DateTime date, DateRenderEventArgs dateArgs, bool forCell = true)
         {
@@ -1130,14 +1139,87 @@ namespace Radzen.Blazor
                                .Add("rz-datepicker-other-month", CurrentDate.Month != date.Month)
                                .Add("rz-state-active", !forCell && DateTimeValue.HasValue && DateTimeValue.Value.Date.CompareTo(date.Date) == 0)
                                .Add("rz-datepicker-today", !forCell && DateTime.Now.Date.CompareTo(date.Date) == 0)
+                               .Add("rz-state-focused", !forCell && FocusedDate.Date.CompareTo(date.Date) == 0)
                                .Add("rz-state-disabled", !forCell && dateArgs.Disabled)
                                .ToString();
         }
+        async Task OnCalendarKeyPress(KeyboardEventArgs args)
+        {
+            var key = args.Code != null ? args.Code : args.Key;
+
+            if (key == "ArrowLeft" || key == "ArrowRight")
+            {
+                preventKeyPress = true;
+
+                FocusedDate = FocusedDate.AddDays(key == "ArrowLeft" ? -1 : 1);
+                CurrentDate = FocusedDate;
+            }
+            else if (key == "ArrowUp" || key == "ArrowDown")
+            {
+                preventKeyPress = true;
+
+                FocusedDate = FocusedDate.AddDays(key == "ArrowUp" ? -7 : 7);
+                CurrentDate = FocusedDate;
+            }
+            else if (key == "Escape" || key == "Enter")
+            {
+                preventKeyPress = true;
+
+                if(key == "Enter")
+                {
+                    await SetDay(FocusedDate);
+                }
+
+                await TogglePopup();
+#if NET5_0_OR_GREATER
+                await FocusAsync();
+#endif
+            }
+            else
+            {
+                preventKeyPress = false;
+            }
+        }
+
+        async Task OnKeyPress(KeyboardEventArgs args)
+        {
+            var key = args.Code != null ? args.Code : args.Key;
+
+            if (key == "Escape" || key == "Enter")
+            {
+                preventKeyPress = true;
+
+                await TogglePopup();
+            }
+            else
+            {
+                preventKeyPress = false;
+            }
+        }
+
+        internal async Task TogglePopup()
+        {
+            if (PopupRenderMode == PopupRenderMode.Initial)
+            {
+                await JSRuntime.InvokeVoidAsync("Radzen.togglePopup", Element, PopupID, false, null, null, true, true);
+            }
+            else
+            {
+                await popup.ToggleAsync(Element);
+            }
+        }
+
+        bool preventKeyPress = false;
 #if NET5_0_OR_GREATER
         /// <inheritdoc/>
         public async ValueTask FocusAsync()
         {
-            await input.FocusAsync();
+           try
+           {
+               await input.FocusAsync();
+            }
+            catch
+            {}
         }
 #endif
     }
