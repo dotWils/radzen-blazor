@@ -53,7 +53,7 @@ namespace Radzen.Blazor
     ///      public string Password { get; set; }
     ///      public double Value { get; set; }
     ///      public string RepeatPassword { get; set; }
-    ///    } 
+    ///    }
     ///    Model model = new Model();
     /// }
     /// </code>
@@ -98,10 +98,18 @@ namespace Radzen.Blazor
 
             await base.SetParametersAsync(parameters);
 
-            if (shouldValidate)
+            if (shouldValidate && !firstRender)
             {
                 EditContext.Validate();
             }
+        }
+
+        bool firstRender = true;
+        /// <inheritdoc />
+        protected override void OnAfterRender(bool firstRender)
+        {
+            this.firstRender = firstRender;
+            base.OnAfterRender(firstRender);
         }
 
         /// <inheritdoc />
