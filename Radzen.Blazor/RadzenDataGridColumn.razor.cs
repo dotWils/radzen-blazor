@@ -1005,11 +1005,11 @@ namespace Radzen.Blazor
 
             if (isFirst)
             {
-                filterValue = value;
+                filterValue = CanSetFilterValue() ? value : null;
             }
             else
             {
-                secondFilterValue = value;
+                secondFilterValue = CanSetFilterValue() ? value : null;
             }
         }
 
@@ -1025,12 +1025,13 @@ namespace Radzen.Blazor
             await Grid.FirstPage(true);
         }
 
-        internal bool CanSetFilterValue()
+        internal bool CanSetFilterValue(bool isFirst = true)
         {
-            return GetFilterOperator() == FilterOperator.IsNull
-                    || GetFilterOperator() == FilterOperator.IsNotNull
-                    || GetFilterOperator() == FilterOperator.IsEmpty
-                    || GetFilterOperator() == FilterOperator.IsNotEmpty;
+            var fo = isFirst ? GetFilterOperator() : GetSecondFilterOperator();
+            return fo != FilterOperator.IsNull
+                    && fo != FilterOperator.IsNotNull
+                    && fo != FilterOperator.IsEmpty
+                    && fo != FilterOperator.IsNotEmpty;
         }
 
         internal bool HasCustomFilter()
@@ -1042,7 +1043,7 @@ namespace Radzen.Blazor
         {
             return GetFilterValue() != null
             || GetSecondFilterValue() != null
-            || CanSetFilterValue()
+            || !CanSetFilterValue()
             || HasCustomFilter();
         }
 
