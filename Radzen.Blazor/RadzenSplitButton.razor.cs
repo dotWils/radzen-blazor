@@ -29,6 +29,13 @@ namespace Radzen.Blazor
         }
 
         /// <summary>
+        /// Gets or sets the child content.
+        /// </summary>
+        /// <value>The child content.</value>
+        [Parameter]
+        public RenderFragment ButtonContent { get; set; }
+
+        /// <summary>
         /// Gets or sets the text.
         /// </summary>
         /// <value>The text.</value>
@@ -289,5 +296,16 @@ namespace Radzen.Blazor
                 StateHasChanged();
             }
         }
+
+        internal string SplitButtonId()
+        {
+            return GetId();
+        }
+
+        /// <summary>
+        /// Gets or sets the add button aria-label attribute.
+        /// </summary>
+        [Parameter]
+        public string ButtonAriaLabel { get; set; } = "Button";
     }
 }

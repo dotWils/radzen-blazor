@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -127,6 +128,12 @@ namespace Radzen.Blazor
             {
                 Grid.AddColumn(this);
 
+                if (Grid.FilterMode == FilterMode.CheckBoxList)
+                {
+                    _filterPropertyType = typeof(IEnumerable<object>);
+                    SetFilterOperator(FilterOperator.Contains);
+                }
+
                 var property = GetFilterProperty();
 
                 if (!string.IsNullOrEmpty(property))
@@ -134,7 +141,7 @@ namespace Radzen.Blazor
                     _propertyType = PropertyAccess.GetPropertyType(typeof(TItem), property);
                 }
 
-                if (!string.IsNullOrEmpty(property) && Type == null)
+                if (!string.IsNullOrEmpty(property) && Type == null && Grid.FilterMode != FilterMode.CheckBoxList)
                 {
                     _filterPropertyType = _propertyType;
                 }
@@ -143,14 +150,14 @@ namespace Radzen.Blazor
                 {
                     _filterPropertyType = Type;
                 }
-                else
+                else if(!string.IsNullOrEmpty(Property))
                 {
                     propertyValueGetter = PropertyAccess.Getter<TItem, object>(Property);
                 }
 
-                if (_filterPropertyType == typeof(string))
+                if (_filterPropertyType == typeof(string) && filterOperator != FilterOperator.Custom)
                 {
-                    FilterOperator = FilterOperator.Contains;
+                    SetFilterOperator(FilterOperator.Contains);
                 }
             }
         }
@@ -336,7 +343,7 @@ namespace Radzen.Blazor
         {
             return FilterPlaceholder ?? string.Empty;
         }
-        
+
         /// <summary>
         /// Gets or sets the second filter value.
         /// </summary>
@@ -920,7 +927,7 @@ namespace Radzen.Blazor
                     return;
                 }
             }
-            
+
             if (parameters.DidParameterChange(nameof(FilterOperator), FilterOperator))
             {
                 filterOperator = parameters.GetValueOrDefault<FilterOperator>(nameof(FilterOperator));
@@ -958,6 +965,30 @@ namespace Radzen.Blazor
         public object GetFilterValue()
         {
             return filterValue ?? FilterValue;
+        }
+
+        IEnumerable filterValues;
+        internal IEnumerable GetFilterValues()
+        {
+            if (filterValues == null && Grid.Data != null && !string.IsNullOrEmpty(GetFilterProperty()))
+            {
+                var property = GetFilterProperty();
+                var propertyType = PropertyAccess.GetPropertyType(typeof(TItem), GetFilterProperty());
+
+                if (property.IndexOf(".") != -1)
+                {
+                    property = $"np({property})";
+                }
+
+                if (propertyType == typeof(string))
+                {
+                    property = $@"({property} == null ? """" : {property})";
+                }
+
+                filterValues = Grid.Data.AsQueryable().Select(DynamicLinqCustomTypeProvider.ParsingConfig, property).Distinct().Cast(propertyType ?? typeof(object));
+            }
+
+            return filterValues;
         }
 
         /// <summary>
@@ -1001,6 +1032,11 @@ namespace Radzen.Blazor
             {
                 DateTimeOffset? offset = DateTime.SpecifyKind((DateTime)value, DateTimeKind.Utc);
                 value = offset;
+            }
+
+            if (PropertyAccess.IsEnum(FilterPropertyType) || (PropertyAccess.IsNullableEnum(FilterPropertyType)))
+            {
+                value = value is not null ? (int)value : null;
             }
 
             if (isFirst)
@@ -1209,7 +1245,7 @@ namespace Radzen.Blazor
                 var isStringOperator = o == FilterOperator.Contains || o == FilterOperator.DoesNotContain
                     || o == FilterOperator.StartsWith || o == FilterOperator.EndsWith || o == FilterOperator.IsEmpty || o == FilterOperator.IsNotEmpty;
 
-                if ((FilterPropertyType == typeof(string) || !QueryableExtension.IsEnumerable(FilterPropertyType)) && 
+                if ((FilterPropertyType == typeof(string) || !QueryableExtension.IsEnumerable(FilterPropertyType)) &&
                     (o == FilterOperator.In || o == FilterOperator.NotIn)) return false;
 
                 return FilterPropertyType == typeof(string) || QueryableExtension.IsEnumerable(FilterPropertyType) ? isStringOperator
@@ -1302,6 +1338,12 @@ namespace Radzen.Blazor
         /// </summary>
         public virtual bool ShowTimeForDateTimeFilter()
         {
+#if NET6_0_OR_GREATER
+            if (FilterPropertyType == typeof(DateOnly))
+            {
+                return false;
+            }
+#endif
             return true;
         }
 
