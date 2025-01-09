@@ -1680,7 +1680,16 @@ namespace Radzen.Blazor
 
         internal string GetOrderBy()
         {
-            return string.Join(",", sorts.Select(d => allColumns.ToList().Where(c => c.GetSortProperty() == d.Property).FirstOrDefault()).Where(c => c != null).Select(c => c.GetSortOrderAsString(IsOData())));
+            return string.Join(",", sorts.Select(d => GetSortOrderAsString(d, IsOData())));
+        }
+
+        internal string GetSortOrderAsString(SortDescriptor d, bool isOData)
+        {
+            var property = d.Property;
+            if (string.IsNullOrEmpty(property))
+                return "";
+            var p = isOData ? property.Replace('.', '/') : PropertyAccess.GetProperty(property);
+            return $"{p} {(d.SortOrder == Radzen.SortOrder.Ascending ? "asc" : "desc")}";
         }
 
         /// <summary>
@@ -2952,22 +2961,39 @@ namespace Radzen.Blazor
         /// <param name="item">The item.</param>
         public async System.Threading.Tasks.Task InsertRow(TItem item)
         {
+            await InsertRowAtIndex(item);
+        }
+
+        /// <summary>
+        /// Inserts new row after specific row item.
+        /// </summary>
+        /// <param name="itemToInsert">The item.</param>
+        /// <param name="rowItem">Row item to insert after</param>
+        public async System.Threading.Tasks.Task InsertAfterRow(TItem itemToInsert, TItem rowItem)
+        {
+            var list = this.PagedView.ToList();
+            var index = list.IndexOf(rowItem);
+            await InsertRowAtIndex(itemToInsert, index + 1);
+        }
+
+        private async System.Threading.Tasks.Task InsertRowAtIndex(TItem item, int insertIndex = 0)
+        {
             itemsToInsert.Add(item);
-            if(!IsVirtualizationAllowed())
+            if (!IsVirtualizationAllowed())
             {
                 var list = this.PagedView.ToList();
-                list.Insert(0, item);
+                list.Insert(insertIndex, item);
                 this._view = list.AsQueryable();
                 this.Count++;
             }
             else
             {
-                if(virtualize != null)
+                if (virtualize != null)
                 {
                     await virtualize.RefreshDataAsync();
                 }
 
-                if(groupVirtualize != null)
+                if (groupVirtualize != null)
                 {
                     await groupVirtualize.RefreshDataAsync();
                 }

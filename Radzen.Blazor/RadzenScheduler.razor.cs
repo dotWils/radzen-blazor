@@ -146,6 +146,13 @@ namespace Radzen.Blazor
         public string TextProperty { get; set; }
 
         /// <summary>
+        /// Specifies whether to Show or Hide the Scheduler Header. Defaults to true />.
+        /// </summary>
+        /// <value>Show / hide header</value>
+        [Parameter]
+        public bool ShowHeader { get; set; } = true;
+
+        /// <summary>
         /// A callback that will be invoked when the user clicks a slot in the current view. Commonly used to add new appointments.
         /// </summary>
         /// <example>
@@ -580,7 +587,7 @@ namespace Radzen.Blazor
         {
             if (SelectedView != null)
             {
-                await LoadData.InvokeAsync(new SchedulerLoadDataEventArgs { Start = SelectedView.StartDate, End = SelectedView.EndDate });
+                await LoadData.InvokeAsync(new SchedulerLoadDataEventArgs { Start = SelectedView.StartDate, End = SelectedView.EndDate, View = SelectedView });
             }
         }
 
