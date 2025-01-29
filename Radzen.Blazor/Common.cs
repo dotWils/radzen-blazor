@@ -7,6 +7,7 @@ using Radzen.Blazor.Rendering;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Linq.Dynamic.Core;
 using System.Linq.Dynamic.Core.Parser;
@@ -2902,9 +2903,14 @@ namespace Radzen
         /// </summary>
         /// <param name="value">The value.</param>
         /// <param name="type">The type.</param>
+        /// <param name="culture">The culture.</param>
         /// <returns>System.Object</returns>
-        public static object ChangeType(object value, Type type)
+        public static object ChangeType(object value, Type type, CultureInfo culture = null)
         {
+            if (culture == null)
+            {
+                culture = CultureInfo.CurrentCulture;
+            }
             if (value == null && Nullable.GetUnderlyingType(type) != null)
             {
                 return value;
@@ -2932,7 +2938,7 @@ namespace Radzen
 
             }
 
-            return value is IConvertible ? Convert.ChangeType(value, Nullable.GetUnderlyingType(type) ?? type) : value;
+            return value is IConvertible ? Convert.ChangeType(value, Nullable.GetUnderlyingType(type) ?? type, culture) : value;
         }
     }
 
@@ -3408,6 +3414,21 @@ namespace Radzen
         /// Sets the focus.
         /// </summary>
         ValueTask FocusAsync();
+
+        /// <summary>
+        /// Sets the Disabled state of the component
+        /// </summary>
+        bool Disabled { get; set; }
+
+        /// <summary>
+        /// Sets the Visible state of the component
+        /// </summary>
+        bool Visible { get; set; }
+
+        /// <summary>
+        /// Sets the FormFieldContext of the component
+        /// </summary>
+        IFormFieldContext FormFieldContext { get; }
     }
 
     /// <summary>

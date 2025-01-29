@@ -391,7 +391,7 @@ namespace Radzen
                 }
                 else if (!string.IsNullOrEmpty(value) && columnFilterOperator == FilterOperator.DoesNotContain)
                 {
-                    return $@"({property} == null ? """" : !{property}){filterCaseSensitivityOperator}.Contains(""{value}""{filterCaseSensitivityOperator})";
+                    return $@"!({property} == null ? """" : {property}){filterCaseSensitivityOperator}.Contains(""{value}""{filterCaseSensitivityOperator})";
                 }
                 else if (!string.IsNullOrEmpty(value) && columnFilterOperator == FilterOperator.StartsWith)
                 {
@@ -1276,12 +1276,21 @@ namespace Radzen
 
                 if (!string.IsNullOrEmpty(property))
                 {
-                    query.Add($@"({property} == null ? """" : {property})");
+                    if (typeof(EnumerableQuery).IsAssignableFrom(source.GetType()))
+                    {
+                        query.Add($@"({property} == null ? """" : Convert.ToString({property}))");
+                    }
+                    else
+                    {
+                        query.Add($@"({property} == null ? """" : {property})");
+                    }
                 }
-
-                if (typeof(EnumerableQuery).IsAssignableFrom(source.GetType()))
+                else
                 {
-                    query.Add("ToString()");
+                    if (typeof(EnumerableQuery).IsAssignableFrom(source.GetType()))
+                    {
+                        query.Add("Convert.ToString(it)");
+                    }
                 }
 
                 if (ignoreCase)

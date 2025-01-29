@@ -1302,6 +1302,13 @@ namespace Radzen.Blazor
         [Parameter]
         public string IsNotEmptyText { get; set; } = "Is not empty";
 
+        /// <summary>
+        /// Gets or sets the custom filter operator text.
+        /// </summary>
+        /// <value>The custom filter operator text.</value>
+        [Parameter]
+        public string CustomText { get; set; } = "Custom";
+
         internal class NumericFilterEventCallback
         {
             public static EventCallback<T> Create<T>(object receiver, Action<T> action)
@@ -1808,12 +1815,12 @@ namespace Radzen.Blazor
                             var firstItem = view.FirstOrDefault();
                             if (firstItem != null)
                             {
-                                view = view.Cast(firstItem.GetType()).AsQueryable().OrderBy(orderBy).Cast<TItem>();
+                                view = view.Cast(firstItem.GetType()).AsQueryable().OrderBy(DynamicLinqCustomTypeProvider.ParsingConfig, orderBy).Cast<TItem>();
                             }
                         }
                         else
                         {
-                            view = view.OrderBy(orderBy);
+                            view = view.OrderBy(DynamicLinqCustomTypeProvider.ParsingConfig, orderBy);
                         }
                     }
                 }
@@ -2202,18 +2209,18 @@ namespace Radzen.Blazor
         /// Called when parameters set asynchronous.
         /// </summary>
         /// <returns>Task.</returns>
-        protected override Task OnParametersSetAsync()
+        protected override async Task OnParametersSetAsync()
         {
             if (Visible && !LoadData.HasDelegate && _view == null)
             {
-                InvokeAsync(Reload);
+                await InvokeAsync(Reload);
             }
             else
             {
                 CalculatePager();
             }
 
-            return Task.CompletedTask;
+            await Task.CompletedTask;
         }
 
         internal Dictionary<RadzenDataGridGroupRow<TItem>, bool> collapsedGroupItems = new Dictionary<RadzenDataGridGroupRow<TItem>, bool>();
