@@ -566,5 +566,17 @@ namespace Radzen.Blazor
                 return _currentItems;
             }
         }
+        internal async Task ChangeState()
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+
+        /// <inheritdoc />
+        protected override void OnInitialized()
+        {
+            focusedIndex = focusedIndex == -1 ? 0 : focusedIndex;
+
+            base.OnInitialized();
+        }
     }
 }

@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Linq.Dynamic.Core;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
@@ -286,8 +285,38 @@ namespace Radzen.Blazor
             YearTo = max.HasValue ? max.Value.Year : int.Parse(YearRange.Split(':').Last());
             months = Enumerable.Range(1, 12).Select(i => new NameValue() { Name = Culture.DateTimeFormat.GetMonthName(i), Value = i }).ToList();
             years = Enumerable.Range(YearFrom, YearTo - YearFrom + 1)
-                .Select(i => new NameValue() { Name = $"{i}", Value = i }).ToList();
+                .Select(i => new NameValue() { Name = YearFormatter(i), Value = i }).ToList();
         }
+
+        private string FormatYear(int year)
+        {
+            year = Culture.Calendar.GetYear(new DateTime(year, 1, 1));
+
+            var date = new DateTime(year, 1, 1);
+
+            return date.ToString(YearFormat, Culture);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RadzenDatePicker{TValue}"/> class.
+        /// </summary>
+        public RadzenDatePicker()
+        {
+            YearFormatter = FormatYear;
+        }
+
+        /// <summary>
+        /// Gets or sets the year formatter. Set to <c>FormatYear</c> by default.
+        /// If set, this function will take precedence over <see cref="YearFormat"/>.
+        /// </summary>
+        [Parameter]
+        public Func<int, string> YearFormatter { get; set; }
+
+        /// <summary>
+        /// Gets ot sets the year format. Set to <c>yyyy</c> by default.
+        /// </summary>
+        [Parameter]
+        public string YearFormat { get; set; } = "yyyy";
 
         /// <summary>
         /// Gets or sets a value indicating whether value can be cleared.
@@ -741,6 +770,13 @@ namespace Radzen.Blazor
         [Parameter]
         public bool ShowButton { get; set; } = true;
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the input box is shown. Ignored if ShowButton is false.
+        /// </summary>
+        /// <value><c>true</c> to show the input box; <c>false</c> to hide the input box.</value>
+        [Parameter]
+        public bool ShowInput { get; set; } = true;
+
         private bool IsReadonly => ReadOnly || !AllowInput;
 
         /// <summary>
@@ -753,6 +789,7 @@ namespace Radzen.Blazor
         /// <summary>
         /// Gets or sets the FormFieldContext of the component
         /// </summary>
+        [CascadingParameter]
         public IFormFieldContext FormFieldContext { get; set; } = null;
 
         /// <summary>
@@ -922,6 +959,9 @@ namespace Radzen.Blazor
             return $"{(Inline ? "overflow:auto;" : "")}{(Style != null ? Style : "")}";
         }
 
+        /// <summary> Gets the current placeholder. Returns empty string if this component is inside a RadzenFormField.</summary>
+        protected string CurrentPlaceholder => FormFieldContext?.AllowFloatingLabel == true ? " " : Placeholder;
+
         /// <summary>
         /// Closes this instance popup.
         /// </summary>
@@ -982,10 +1022,13 @@ namespace Radzen.Blazor
         /// <inheritdoc />
         protected override string GetComponentCssClass()
         {
-            return ClassList.Create()
+            return ClassList.Create("rz-datepicker")
                             .Add("rz-datepicker-inline", Inline)
+                            .AddDisabled(Disabled)
+                            .Add("rz-state-empty", !HasValue)
                             .Add(FieldIdentifier, EditContext)
                             .ToString();
+
         }
 
         private async Task SetDay(DateTime newValue)
@@ -1062,7 +1105,14 @@ namespace Radzen.Blazor
                 shouldClose = !visible;
             }
 
+            var disabledChanged = parameters.DidParameterChange(nameof(Disabled), Disabled);
+
             await base.SetParametersAsync(parameters);
+
+            if (disabledChanged)
+            {
+                FormFieldContext?.DisabledChanged(Disabled);
+            }
 
             if (shouldClose && !firstRender && IsJSRuntimeAvailable)
             {
@@ -1191,7 +1241,7 @@ namespace Radzen.Blazor
             {
                 preventKeyPress = true;
 
-                if (!DateAttributes(FocusedDate).Disabled)
+                if (!DateAttributes(FocusedDate).Disabled && !ReadOnly)
                 {
                     await SetDay(FocusedDate);
 
@@ -1301,12 +1351,17 @@ namespace Radzen.Blazor
         /// <inheritdoc/>
         public async ValueTask FocusAsync()
         {
-           try
-           {
-               await input.FocusAsync();
+            // If ShowButton is false, the input box is always shown
+            if (ShowInput || !ShowButton)
+            {
+                try
+                {
+                    await input.FocusAsync();
+                }
+                catch
+                { }
             }
-            catch
-            {}
+            
         }
     }
 }

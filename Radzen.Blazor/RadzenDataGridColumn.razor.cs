@@ -5,7 +5,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 
 namespace Radzen.Blazor
@@ -183,7 +182,7 @@ namespace Radzen.Blazor
                     propertyValueGetter = PropertyAccess.Getter<TItem, object>(Property);
                 }
 
-                if (_filterPropertyType == typeof(string) && filterOperator != FilterOperator.Custom && filterOperator == null)
+                if (_filterPropertyType == typeof(string) && filterOperator != FilterOperator.Custom && filterOperator == null && _filterOperator == null)
                 {
                     SetFilterOperator(FilterOperator.Contains);
                 }
@@ -398,6 +397,14 @@ namespace Radzen.Blazor
         [Parameter]
         public string MinWidth { get; set; }
 
+
+        /// <summary>
+        /// Gets or sets the max-width.
+        /// </summary>
+        /// <value>The max-width.</value>
+        [Parameter]
+        public string MaxWidth { get; set; }
+
         /// <summary>
         /// Gets or sets the format string.
         /// </summary>
@@ -439,6 +446,18 @@ namespace Radzen.Blazor
         /// <value>The group footer CSS class applied to group footer cell.</value>
         [Parameter]
         public string GroupFooterCssClass { get; set; }
+
+        /// <summary>
+        /// Gets or sets the header white space style.
+        /// </summary>
+        [Parameter]
+        public WhiteSpace HeaderWhiteSpace { get; set; } = WhiteSpace.Truncate;
+
+        /// <summary>
+        /// Gets or sets the white space style.
+        /// </summary>
+        [Parameter]
+        public WhiteSpace WhiteSpace { get; set; } = WhiteSpace.Truncate;
 
         /// <summary>
         /// Gets or sets a value indicating whether this <see cref="RadzenDataGridColumn{TItem}"/> is filterable.
@@ -606,7 +625,7 @@ namespace Radzen.Blazor
                 var enumValue = value as Enum;
                 if (enumValue != null)
                 {
-                    value = EnumExtensions.GetDisplayDescription(enumValue);
+                    value = EnumExtensions.GetDisplayDescription(enumValue, Grid.EnumFilterTranslationFunc);
                 }
             }
 
@@ -665,6 +684,11 @@ namespace Radzen.Blazor
             if (!string.IsNullOrEmpty(MinWidth))
             {
                 style.Add($"min-width:{MinWidth}");
+            }
+
+            if (!string.IsNullOrEmpty(MaxWidth))
+            {
+                style.Add($"max-width:{MaxWidth}");
             }
 
             return string.Join(";", style);
@@ -1050,6 +1074,24 @@ namespace Radzen.Blazor
         }
 
         /// <summary>
+        /// Get body column class.
+        /// </summary>
+        /// <returns></returns>
+        internal string GetCellClass()
+        {
+            return $"rz-cell-data rz-text-{Enum.GetName(typeof(WhiteSpace), WhiteSpace).ToLower()}";
+        }
+
+        /// <summary>
+        /// Get column header class.
+        /// </summary>
+        /// <returns></returns>
+        internal string GetHeaderClass()
+        {
+            return $"rz-column-title-content rz-text-{Enum.GetName(typeof(WhiteSpace), HeaderWhiteSpace).ToLower()}";
+        }
+
+        /// <summary>
         /// Set column filter value.
         /// </summary>
         public void SetFilterValue(object value, bool isFirst = true)
@@ -1060,7 +1102,19 @@ namespace Radzen.Blazor
                 value = offset;
             }
 
-            if (PropertyAccess.IsEnum(FilterPropertyType) || (PropertyAccess.IsNullableEnum(FilterPropertyType)))
+            if ((FilterPropertyType == typeof(TimeOnly) || FilterPropertyType == typeof(TimeOnly?)) && value != null && value is string)
+            {
+                var v = TimeOnly.Parse($"{value}");
+                value = FilterPropertyType == typeof(TimeOnly) ? v : (TimeOnly?)v;
+            }
+
+            if ((FilterPropertyType == typeof(Guid) || FilterPropertyType == typeof(Guid?)) && value != null && value is string)
+            {
+                var v = Guid.Parse($"{value}");
+                value = FilterPropertyType == typeof(Guid) ? v : (Guid?)v;
+            }
+
+            if (!QueryableExtension.IsEnumerable(value?.GetType() ?? typeof(object)) && (PropertyAccess.IsEnum(FilterPropertyType) || (PropertyAccess.IsNullableEnum(FilterPropertyType))))
             {
                 Type enumType = Enum.GetUnderlyingType(Nullable.GetUnderlyingType(FilterPropertyType) ?? FilterPropertyType);
                 value = value is not null ? Convert.ChangeType(value, enumType) : null;
@@ -1155,7 +1209,11 @@ namespace Radzen.Blazor
                     ? !string.IsNullOrEmpty(FilterProperty) && FilterProperty != Property ? FilterOperator.In : FilterOperator.Contains
                     : default(FilterOperator);
 
-            SetFilterOperator(fo);
+            if (FilterOperators?.Contains(fo) == true)
+            {
+                SetFilterOperator(fo);
+            }
+
             SetSecondFilterOperator(null);
 
             filterValue = null;

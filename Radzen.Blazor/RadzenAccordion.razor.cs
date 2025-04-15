@@ -113,7 +113,7 @@ namespace Radzen.Blazor
         /// <summary>
         /// Refreshes this instance.
         /// </summary>
-        internal void Refresh()
+        public void Refresh()
         {
             StateHasChanged();
         }
@@ -250,6 +250,14 @@ namespace Radzen.Blazor
             }
             
             await base.SetParametersAsync(parameters);
+        }
+
+        /// <inheritdoc />
+        protected override void OnInitialized()
+        {
+            focusedIndex = focusedIndex == -1 ? 0 : focusedIndex;
+
+            base.OnInitialized();
         }
     }
 }

@@ -43,6 +43,13 @@ namespace Radzen.Blazor
         public bool Multiple { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether selecting all items is allowed.
+        /// </summary>
+        /// <value><c>true</c> if selecting all items is allowed; otherwise, <c>false</c>.</value>
+        [Parameter]
+        public bool AllowSelectAll { get; set; } = true;
+
+        /// <summary>
         /// Gets or sets a value indicating whether component is disabled.
         /// </summary>
         /// <value><c>true</c> if component is disabled; otherwise, <c>false</c>.</value>
@@ -90,6 +97,13 @@ namespace Radzen.Blazor
         /// <value>The text property.</value>
         [Parameter]
         public string TextProperty { get; set; }
+
+        /// <summary>
+        /// Gets or sets the disabled property
+        /// </summary>
+        /// <value>The disabled property.</value>
+        [Parameter]
+        public string DisabledProperty { get; set; }
 
         /// <summary>
         /// Gets or sets the source template
@@ -232,6 +246,34 @@ namespace Radzen.Blazor
         public string SelectedTargetToSourceTitle { get; set; } = "Move selected target items to source collection";
 
         /// <summary>
+        /// Gets or sets the source to target icon
+        /// </summary>
+        /// <value>The source to target icon.</value>
+        [Parameter]
+        public string SourceToTargetIcon { get; set; } = "keyboard_double_arrow_right";
+
+        /// <summary>
+        /// Gets or sets the selected source to target icon
+        /// </summary>
+        /// <value>The selected source to target icon.</value>
+        [Parameter]
+        public string SelectedSourceToTargetIcon { get; set; } = "keyboard_arrow_right";
+
+        /// <summary>
+        /// Gets or sets the target to source icon
+        /// </summary>
+        /// <value>The target to source icon.</value>
+        [Parameter]
+        public string TargetToSourceIcon { get; set; } = "keyboard_double_arrow_left";
+
+        /// <summary>
+        /// Gets or sets the selected target to source  icon
+        /// </summary>
+        /// <value>The selected target to source icon.</value>
+        [Parameter]
+        public string SelectedTargetToSourceIcon { get; set; } = "keyboard_arrow_left";
+
+        /// <summary>
         /// Gets the final CSS style rendered by the component. Combines it with a <c>style</c> custom attribute.
         /// </summary>
         protected string GetStyle()
@@ -316,7 +358,25 @@ namespace Radzen.Blazor
             await base.SetParametersAsync(parameters);
         }
 
-        async Task Update(bool sourceToTarget, IEnumerable<TItem> items)
+        /// <summary>
+        /// Returns a collection of TItem that are selected in the source list.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<TItem> GetSelectedSources()
+        {
+            return Multiple ? (selectedSourceItems as IEnumerable)?.Cast<TItem>() : [(TItem)selectedSourceItems];
+        }
+
+        /// <summary>
+        /// Returns a collection of TItem that are selected in the target list.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<TItem> GetSelectedTargets()
+        {
+            return Multiple ? (selectedTargetItems as IEnumerable)?.Cast<TItem>() : [(TItem)selectedTargetItems];
+        }
+
+        private async Task Update(bool sourceToTarget, IEnumerable<TItem> items)
         {
             if (sourceToTarget)
             {
@@ -363,24 +423,12 @@ namespace Radzen.Blazor
             StateHasChanged();
         }
 
-        async Task SourceToTarget()
-        {
-            await Update(true, null);
-        }
+        private async Task SourceToTarget() => await Update(true, null);
 
-        async Task SelectedSourceToTarget()
-        {
-            await Update(true, Multiple ? (selectedSourceItems as IEnumerable)?.Cast<TItem>() : new List<TItem>() { (TItem)selectedSourceItems } );
-        }
+        private async Task SelectedSourceToTarget() => await Update(true, GetSelectedSources());
 
-        async Task TargetToSource()
-        {
-            await Update(false, null);
-        }
+        private async Task TargetToSource() => await Update(false, null);
 
-        async Task SelectedTargetToSource()
-        {
-            await Update(false, Multiple ? (selectedTargetItems as IEnumerable)?.Cast<TItem>() : new List<TItem>() { (TItem)selectedTargetItems });
-        }
+        private async Task SelectedTargetToSource() => await Update(false, GetSelectedTargets());
     }
 }

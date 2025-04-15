@@ -11,8 +11,7 @@
 @if (Visible)
 {
 <div @ref="@Element" role="tablist" style=@Style @attributes="Attributes" class="@GetCssClass()" id="@GetId()" 
-    tabindex="0" @onkeydown="@((args) => OnKeyPress(args))" @onkeydown:preventDefault=preventKeyPress @onkeydown:stopPropagation=preventKeyPress 
-    @onfocus=@(args => focusedIndex = focusedIndex == -1 ? 0: focusedIndex)>
+    tabindex="0" @onkeydown="@((args) => OnKeyPress(args))" @onkeydown:preventDefault=preventKeyPress @onkeydown:stopPropagation=preventKeyPress>
     @for (var i = 0; i < items.Count; i++)
     {
         var item = items[i];    
@@ -32,7 +31,7 @@
                 }
                 @if (!string.IsNullOrEmpty(item.Icon))
                 {
-            <i class="notranslate rzi" style="@(!string.IsNullOrEmpty(item.IconColor) ? $"color:{item.IconColor}" : null)">@((MarkupString)item.Icon)</i>
+            <i class="notranslate rzi" style="@(!string.IsNullOrEmpty(item.IconColor) ? $"color:{item.IconColor}" : null)">@item.Icon</i>
                 }
                 @if (item.Template != null)
                 {
@@ -40,7 +39,7 @@
                 }
                 else if(!string.IsNullOrEmpty(item.Text))
                 {
-                    <span>@((MarkupString)item.Text)</span>
+                    <span>@item.Text</span>
                 }
             </a>
         </div>

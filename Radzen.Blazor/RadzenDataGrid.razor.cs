@@ -7,9 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Data.Common;
 using System.Linq;
-using System.Linq.Dynamic.Core;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -157,8 +155,8 @@ namespace Radzen.Blazor
 
             if (Groups.Any())
             {
-                query = view.AsQueryable().OrderBy(DynamicLinqCustomTypeProvider.ParsingConfig, Groups.Any() ? string.Join(',', Groups.Select(g => $"{(typeof(TItem) == typeof(object) ? g.Property : "np(" + g.Property + ")")}")) : "it");
-                _groupedPagedView = await Task.FromResult(query.GroupByMany(DynamicLinqCustomTypeProvider.ParsingConfig, Groups.Any() ? Groups.Select(g => $"{(typeof(TItem) == typeof(object) ? g.Property : "np(" + g.Property + ")")}").ToArray() : new string[] { "it" }).ToList());
+                query = view.AsQueryable().OrderBy(Groups.Any() ? string.Join(',', Groups.Select(g => g.Property)) : null);
+                _groupedPagedView = await Task.FromResult(query.GroupByMany(Groups.Any() ? Groups.Select(g => g.Property).ToArray() : new string[] { "it" }).ToList());
 
                 totalItemsCount = await Task.FromResult(_groupedPagedView.Count());
             }
@@ -365,9 +363,9 @@ namespace Radzen.Blazor
                 if (_groupedPagedView == null)
                 {
                     var orderBy = GetOrderBy();
-                    var query = Groups.Count(g => g.SortOrder == null) == Groups.Count || !string.IsNullOrEmpty(orderBy) ? View : View.OrderBy(DynamicLinqCustomTypeProvider.ParsingConfig, string.Join(',', Groups.Select(g => $"{(typeof(TItem) == typeof(object) ? g.Property : "np(" + g.Property + ")")} {(g.SortOrder == null ? "" : g.SortOrder == SortOrder.Ascending ? " asc" : " desc")}")));
+                    var query = Groups.Count(g => g.SortOrder == null) == Groups.Count || !string.IsNullOrEmpty(orderBy) ? View : View.OrderBy(string.Join(',', Groups.Select(g => $"{g.Property} {(g.SortOrder == null ? "" : g.SortOrder == SortOrder.Ascending ? " asc" : " desc")}")));
                     var v = (AllowPaging && !LoadData.HasDelegate ? query.Skip(skip).Take(PageSize) : query).ToList().AsQueryable();
-                    _groupedPagedView = v.GroupByMany(DynamicLinqCustomTypeProvider.ParsingConfig, Groups.Select(g => $"{(typeof(TItem) == typeof(object) ? g.Property : "np(" + g.Property + ")")}").ToArray()).ToList();
+                    _groupedPagedView = v.GroupByMany(Groups.Select(g => g.Property).ToArray()).ToList();
                 }
                 return _groupedPagedView;
             }
@@ -1729,12 +1727,12 @@ namespace Radzen.Blazor
                     var firstItem = view.FirstOrDefault();
                     if (firstItem != null)
                     {
-                        view = view.Cast(firstItem.GetType()).AsQueryable().OrderBy(orderBy).Cast<TItem>();
+                        view = QueryableExtension.Cast(view, firstItem.GetType()).AsQueryable().OrderBy(orderBy).Cast<TItem>();
                     }
                 }
                 else
                 {
-                    view = view.OrderBy(orderBy);
+                    view = view.OrderBy<TItem>(orderBy);
                 }
             }
 
@@ -1760,7 +1758,7 @@ namespace Radzen.Blazor
                     var cd = childData[item].Data.AsQueryable();
                     if (!string.IsNullOrEmpty(orderBy))
                     {
-                        cd = cd.OrderBy(orderBy);
+                        cd = cd.OrderBy<TItem>(orderBy);
                     }
 
                     viewList.InsertRange(viewList.IndexOf(item) + 1, cd);
@@ -1815,12 +1813,13 @@ namespace Radzen.Blazor
                             var firstItem = view.FirstOrDefault();
                             if (firstItem != null)
                             {
-                                view = view.Cast(firstItem.GetType()).AsQueryable().OrderBy(DynamicLinqCustomTypeProvider.ParsingConfig, orderBy).Cast<TItem>();
+                                view = QueryableExtension.Cast(view, firstItem.GetType());
+                                view = view.OrderBy(orderBy).Cast<TItem>();
                             }
                         }
                         else
                         {
-                            view = view.OrderBy(DynamicLinqCustomTypeProvider.ParsingConfig, orderBy);
+                            view = view.OrderBy(orderBy);
                         }
                     }
                 }
@@ -2423,6 +2422,19 @@ namespace Radzen.Blazor
             }
         }
 
+        /// <summary>
+        /// Force load of the DataGrid Settings.
+        /// This method triggers a reload of the DataGrid settings, optionally forcing a reload even if the settings are already loaded.
+        /// </summary>
+        /// <param name="forceReload">If true, forces a reload of the settings regardless of their current state. Default is false.</param>
+        public async Task ReloadSettings(bool forceReload = false)
+        {
+            if (settings != null)
+            {
+                await LoadSettingsInternal(settings, forceReload);
+            }
+        }
+
         /// <inheritdoc />
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
@@ -2687,7 +2699,7 @@ namespace Radzen.Blazor
 
         internal async System.Threading.Tasks.Task OnRowSelect(TItem item, bool raiseChange = true)
         {
-            var focusedIndexResult = PagedView
+            var focusedIndexResult = PagedView.ToList()
                 .Select((x, i) => new { Item = x, Index = i })
                 .Where(itemWithIndex => ItemEquals(itemWithIndex.Item, item))
                 .FirstOrDefault();
@@ -3375,9 +3387,9 @@ namespace Radzen.Blazor
         public EventCallback<int> PageSizeChanged { get; set; }
 
         /// <summary>
-        /// Gets DataGrid settings as JSON string.
+        /// Saves DataGrid settings as JSON string.
         /// </summary>
-        internal void SaveSettings()
+        public void SaveSettings()
         {
             if (SettingsChanged.HasDelegate && canSaveSettings)
             {
@@ -3412,13 +3424,16 @@ namespace Radzen.Blazor
         }
 
         /// <summary>
-        /// Load DataGrid settings saved from GetSettings() method.
+        /// Load DataGrid settings saved from the GetSettings() method.
+        /// This internal method handles the actual loading or updating of the DataGrid settings.
         /// </summary>
-        internal async Task LoadSettingsInternal(DataGridSettings settings)
+        /// <param name="settings">The DataGridSettings object containing the settings to be loaded.</param>
+        /// <param name="forceUpdate">If true, forces an update of the settings even if they haven't changed. Default is false.</param>
+        internal async Task LoadSettingsInternal(DataGridSettings settings, bool forceUpdate = false)
         {
             if (SettingsChanged.HasDelegate)
             {
-                var shouldUpdateState = false;
+                var shouldUpdateState = forceUpdate;
                 var hasFilter = settings.Columns != null && settings.Columns.Any(c =>
                     c.FilterValue != null || c.SecondFilterValue != null ||
                     c.FilterOperator == FilterOperator.IsNull || c.FilterOperator == FilterOperator.IsNotNull ||
@@ -3626,6 +3641,14 @@ namespace Radzen.Blazor
                 {
                     return element.GetDateTime();
                 }
+                else if (type == typeof(DateOnly) || type == typeof(DateOnly?))
+                {
+                    return DateOnly.FromDateTime(element.GetDateTime());
+                }
+                else if (type == typeof(TimeOnly) || type == typeof(TimeOnly?))
+                {
+                    return TimeOnly.FromDateTime(element.GetDateTime());
+                }
                 else if (type == typeof(DateTimeOffset) || type == typeof(DateTimeOffset?))
                 {
                     return element.GetDateTimeOffset();
@@ -3721,6 +3744,14 @@ namespace Radzen.Blazor
             SaveSettings();
 
             await OnPageChanged(args);
+        }
+
+        /// <inheritdoc />
+        protected override void OnInitialized()
+        {
+            focusedIndex = focusedIndex == -1 ? 0 : focusedIndex;
+
+            base.OnInitialized();
         }
     }
 }

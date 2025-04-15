@@ -155,9 +155,9 @@ namespace Radzen.Blazor
         }
 
         bool clientExpanded;
-        internal async Task Toggle()
+        async Task Toggle()
         {
-            if (expanded)
+            if (expanded && !Tree.SingleExpand)
             {
                 clientExpanded = !clientExpanded;
 
@@ -229,15 +229,14 @@ namespace Radzen.Blazor
 
                 if (Tree.SingleExpand)
                 {
-                    var siblings = (ParentItem?.items ?? Tree.items).ToList();
+                    var siblings = (ParentItem?.items ?? Tree.items).Where(s => s != this && s.expanded).ToList();
 
                     foreach (var sibling in siblings)
                     {
-                        if (sibling != this && sibling.expanded)
-                        {
-                            await sibling.Toggle();
-                        }
+                        await sibling.Toggle();
                     }
+
+                    await Tree.ChangeState();
                 }
             }
         }

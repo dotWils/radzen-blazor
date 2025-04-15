@@ -3,7 +3,6 @@ using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 
 namespace Radzen.Blazor
@@ -68,6 +67,7 @@ namespace Radzen.Blazor
         /// Gets or sets the additional content to be rendered in place of the default navigation buttons in the scheduler.
         /// This property allows for complete customization of the navigation controls, replacing the native date navigation buttons (such as year, month, and day) with user-defined content or buttons.
         /// Use this to add custom controls or interactive elements that better suit your application's requirements.
+        /// This requires that the <c>ShowHeader</c> parameter to be set to true (enabled by default).
         /// </summary>
         /// <value>The custom navigation template to replace default navigation buttons.</value>
         [Parameter]
@@ -631,7 +631,7 @@ namespace Radzen.Blazor
         {
             if (Data == null)
             {
-                return Array.Empty<AppointmentData>();
+                return [];
             }
 
             if (start == rangeStart && end == rangeEnd && appointments != null)
@@ -642,10 +642,11 @@ namespace Radzen.Blazor
             rangeStart = start;
             rangeEnd = end;
 
-            var predicate = $"{EndProperty} >= @0 && {StartProperty} < @1";
-
             appointments = Data.AsQueryable()
-                               .Where(DynamicLinqCustomTypeProvider.ParsingConfig, predicate, start, end)
+                               .Where([
+                                    new FilterDescriptor { Property = EndProperty, FilterValue = start, FilterOperator = FilterOperator.GreaterThanOrEquals },
+                                    new FilterDescriptor { Property = StartProperty, FilterValue = end, FilterOperator = FilterOperator.LessThanOrEquals }
+                                ], LogicalFilterOperator.And, FilterCaseSensitivity.Default)
                                .ToList()
                                .Select(item => new AppointmentData { Start = startGetter(item), End = endGetter(item), Text = textGetter(item), Data = item });
 
