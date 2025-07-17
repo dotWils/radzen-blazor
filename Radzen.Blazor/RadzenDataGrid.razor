@@ -141,11 +141,11 @@
                                 var columnIndex = visibleColumns.IndexOf(column);
                                 var sortableClass = AllowSorting && column.Sortable ? "rz-sortable-column" : "";
 
-                                <RadzenDataGridHeaderCell RowIndex="@i" Grid="@this" Column="@column" ColumnIndex="@columnIndex" CssClass="@($"rz-unselectable-text {sortableClass} {column.HeaderCssClass} {getFrozenColumnClass(column, visibleColumns)} {getCompositeCellCSSClass(column)} {getColumnAlignClass(column)}".Trim())" Attributes="@(cellAttr)" />
+                                <RadzenDataGridHeaderCell @key=column RowIndex="@i" Grid="@this" Column="@column" ColumnIndex="@columnIndex" CssClass="@($"rz-unselectable-text {sortableClass} {column.HeaderCssClass} {getFrozenColumnClass(column, visibleColumns)} {getCompositeCellCSSClass(column)} {getColumnAlignClass(column)}".Trim())" Attributes="@(cellAttr)" />
                             }
                         </tr>
                     }
-                    @if (AllowFiltering && (visibleColumns.Any(c => c.FilterMode == FilterMode.Simple || c.FilterMode == FilterMode.SimpleWithMenu) || FilterMode == FilterMode.Simple || FilterMode == FilterMode.SimpleWithMenu) && columns.Where(column => column.Filterable && (!string.IsNullOrEmpty(column.GetFilterProperty()) || column.FilterTemplate != null)).Any())
+                    @if (FilterRowActive)
                     {
                         <tr @onkeydown:stopPropagation>
                              @if (ShowGroupExpandColumn)
@@ -566,7 +566,7 @@
             IReadOnlyDictionary<string, object> CellAttributes = new System.Collections.ObjectModel.ReadOnlyDictionary<string, object>(cellAttributes);
 
             var spanAttributes = new Dictionary<string, object>();
-            var title = column.Template == null && this.ShowCellDataAsTooltip ? $"{column.GetValue(Item)}" : "";
+            var title = column.Template == null && this.ShowCellDataAsTooltip || column.ShowCellDataAsTooltip ? $"{column.GetValue(Item)}" : "";
             if(!string.IsNullOrEmpty(title))
             {
                 SetAttribute(spanAttributes, "title", title);
@@ -601,7 +601,24 @@
                                 {
                                     @if (this.IsRowInEditMode(Item) && column.EditTemplate != null)
                                     {
-                                        @column.EditTemplate(Item)
+                                        var isDefault = column.IsInEditMode == RadzenDataGridColumn<TItem>.DefaultIsInEditMode;
+
+                                        @if(isDefault)
+                                        {
+                                            @column.EditTemplate(Item)
+                                        }
+                                        else if (column.IsInEditMode(column.Property, Item))
+                                        {
+                                            @column.EditTemplate(Item)
+                                        }
+                                        else if (column.Template != null)
+                                        {
+                                            @column.Template(Item)
+                                        }
+                                        else
+                                        {
+                                            @column.GetValue(Item)
+                                        }
                                     }
                                     else if (column.Template != null)
                                     {

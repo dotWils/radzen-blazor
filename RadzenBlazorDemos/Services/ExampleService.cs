@@ -36,7 +36,7 @@ namespace RadzenBlazorDemos
         },
         new Example
         {
-            Toc = [ new () { Text = "Applying guidelines", Anchor = "#applying-guidelines" }, new () { Text = "WCAG 2.2", Anchor = "#wcag" }, new () { Text = "WCAG compliant theme colors (AA level of conformance)", Anchor = "#wcag-colors" }, new () { Text = "ARIA attributes", Anchor = "#wai-aria" }, new () { Text = "Semantic HTML", Anchor = "#semantic-html" }, new () { Text = "Screen reader compatibility", Anchor = "#screen-readers" }, new () { Text = "Responsive design", Anchor = "#responsive-design" }, new () { Text = "Keyboard compatibility", Anchor = "#keyboard-compatibility" } ],
+            Toc = [ new () { Text = "Applying guidelines", Anchor = "#applying-guidelines" }, new () { Text = "WCAG 2.2", Anchor = "#wcag" }, new () { Text = "WCAG compliant theme colors (AA level of conformance)", Anchor = "#wcag-colors" }, new () { Text = "ARIA attributes", Anchor = "#wai-aria" }, new () { Text = "Semantic HTML", Anchor = "#semantic-html" }, new () { Text = "Screen reader compatibility", Anchor = "#screen-readers" }, new () { Text = "Responsive design", Anchor = "#responsive-design" }, new () { Text = "Keyboard compatibility", Anchor = "#keyboard-compatibility" }, new () { Text = "Accessibility Conformance Report", Anchor = "#acr" } ],
             Name = "Accessibility",
             Path = "/accessibility",
             Title = "Blazor Accessibility | Free UI Components by Radzen",
@@ -66,7 +66,6 @@ namespace RadzenBlazorDemos
                 {
                     Name = "ThemeService",
                     Path = "theme-service",
-                    New = true,
                     Title = "ThemeService",
                     Description = "The ThemeService allows to change the theme of the application at runtime.",
                     Icon = "\ue3ae",
@@ -77,7 +76,6 @@ namespace RadzenBlazorDemos
                     Toc = [ new () { Text = "Switch between light and dark mode", Anchor = "#light-dark-mode" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
                     Name = "AppearanceToggle",
                     Path = "appearance-toggle",
-                    New = true,
                     Title = "Blazor Themes | Free UI Components by Radzen",
                     Description = "The AppearanceToggle button allows you to switch between two predefined themes, most commonly light and dark.",
                     Icon = "\ueb37",
@@ -88,7 +86,6 @@ namespace RadzenBlazorDemos
                     Toc = [ new () { Text = "Theme Colors", Anchor = "#theme-colors" }, new () { Text = "Utility CSS Classes", Anchor = "#utility-css-classes" } ],
                     Name = "Colors",
                     Path = "colors",
-                    Updated = true,
                     Title = "Blazor Color Utilities | Free UI Components by Radzen",
                     Description = "List of colors and utility CSS classes available in Radzen Blazor Components library.",
                     Icon = "\ue997",
@@ -120,7 +117,6 @@ namespace RadzenBlazorDemos
                     Toc = [ new () { Text = "Border radius", Anchor = "#border-radius" }, new () { Text = "Add or remove borders arbitrarily", Anchor = "#add-remove-css-classes" }, new () { Text = "Border color utility CSS classes", Anchor = "#color-css-classes" }, new () { Text = "Border with color utility CSS classes", Anchor = "#utility-css-classes" }, new () { Text = "Set border width via CSS variable", Anchor = "#border-width" }, new () { Text = "Borders with CSS variables", Anchor = "#css-variables" } ],
                     Name = "Borders",
                     Path = "borders",
-                    Updated = true,
                     Title = "Blazor Border Utilities | Free UI Components by Radzen",
                     Description = "Border styles and utility CSS classes for borders available in Radzen Blazor Components library.",
                     Icon = "\ue3c6",
@@ -141,7 +137,6 @@ namespace RadzenBlazorDemos
                     Toc = [ new () { Text = "Responsive display", Anchor = "#responsive-spacing" } ],
                     Name = "Display",
                     Title = "Blazor Display Utilities | Free UI Components by Radzen",
-                    New = true,
                     Description = "Display styles and utility CSS classes available in Radzen Blazor Components library.",
                     Path = "display",
                     Icon = "\uf023",
@@ -152,7 +147,6 @@ namespace RadzenBlazorDemos
                     Toc = [ new () { Text = "Responsive overflow", Anchor = "#responsive-spacing" } ],
                     Name = "Overflow",
                     Title = "Blazor Content Overflow Utilities | Free UI Components by Radzen",
-                    New = true,
                     Description = "Overflow styles and utility CSS classes available in Radzen Blazor Components library.",
                     Path = "overflow",
                     Icon = "\uf829",
@@ -183,7 +177,6 @@ namespace RadzenBlazorDemos
                     Toc = [ new () { Text = "Width percentage CSS classes", Anchor = "#width-percentage-css-classes" }, new () { Text = "Width keyword CSS classes", Anchor = "#width-keyword-css-classes" }, new () { Text = "Width viewport CSS classes", Anchor = "#width-viewport-css-classes" }, new () { Text = "Max-width and min-width CSS classes", Anchor = "#border-radius" }, new () { Text = "Height percentage CSS classes", Anchor = "#height-percentage-css-classes" }, new () { Text = "Height viewport CSS classes", Anchor = "#height-viewport-css-classes" }, new () { Text = "Max-height and min-height CSS classes", Anchor = "#border-radius" }, new () { Text = "Responsive sizing", Anchor = "#responsive-spacing" } ],
                     Name = "Sizing",
                     Title = "Blazor Sizing Utilities | Free UI Components by Radzen",
-                    New = true,
                     Description = "Sizing styles and utility CSS classes for width and height available in Radzen Blazor Components library.",
                     Path = "sizing",
                     Icon = "\uf730",
@@ -1083,7 +1076,7 @@ namespace RadzenBlazorDemos
                 },
                 new Example
                 {
-                    Toc = [ new () { Text = "Year Planner and Timeline views", Anchor = "#timeline" }, new () { Text = "Display additional content when the user hovers an appointment", Anchor = "#tooltips" }, new () { Text = "Display any number of days side-by-side", Anchor = "#multiday" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
+                    Toc = [ new () { Text = "Day, week and month views", Anchor="#views"}, new () { Text = "Year Planner and Timeline views", Anchor = "#timeline" }, new () { Text = "Display additional content when the user hovers an appointment", Anchor = "#tooltips" }, new () { Text = "Display any number of days side-by-side", Anchor = "#multiday" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
                     Name = "Scheduler",
                     Path = "scheduler",
                     Updated = true,
@@ -1263,7 +1256,6 @@ namespace RadzenBlazorDemos
                     Description = "Use the Blazor RadzenCardGroup component to visually stick RadzenCards next to each other.",
                     Path = "card-group",
                     Icon = "\ue8f3",
-                    New = true,
                     Tags = new [] { "card", "group", "deck", "container" }
                 },
                 new Example
@@ -1278,7 +1270,6 @@ namespace RadzenBlazorDemos
                 new Example
                 {
                     Toc = [ new () { Text = "Define can-drop and no-drop styles", Anchor = "#can-drop-no-drop-styles" }, new () { Text = "Define a Footer Template per Drop Zone", Anchor = "#footer-template" } ],
-                    New = true,
                     Name = "DropZone",
                     Description = "Demonstration and configuration of the Radzen Blazor DropZone component.",
                     Path = "dropzone",
@@ -1296,7 +1287,6 @@ namespace RadzenBlazorDemos
                 },
                 new Example
                 {
-                    New = true,
                     Name = "Popup",
                     Description = "Demonstration and configuration of the Radzen Blazor Popup component.",
                     Path = "popup",
@@ -1320,7 +1310,7 @@ namespace RadzenBlazorDemos
             Children = new[] {
                 new Example
                 {
-                    Toc = [ new () { Text = "Accordion with single expand", Anchor = "#single-expand" }, new () { Text = "Accordion with multiple expand", Anchor = "#multiple-expand" }, new () { Text = "Dynamically create Accordion items", Anchor = "#dynamic-items" }, new () { Text = "Expand/Collapse events", Anchor = "#expand-collapse-events" }, new () { Text = "Disable expand/collapse", Anchor = "#expand-collapse-events" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
+                    Toc = [ new () { Text = "Accordion with single expand", Anchor = "#single-expand" }, new () { Text = "Accordion with multiple expand", Anchor = "#multiple-expand" }, new () { Text = "Dynamically create Accordion items", Anchor = "#dynamic-items" }, new () { Text = "Expand/Collapse events", Anchor = "#expand-collapse-events" }, new () { Text = "Disable expand/collapse", Anchor = "#disable-expand-collapse" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
                     Name = "Accordion",
                     Path = "accordion",
                     Description = "Demonstration and configuration of the Blazor RadzenAccordion component.",
@@ -1343,7 +1333,6 @@ namespace RadzenBlazorDemos
                     Description = "Demonstration and configuration of the Radzen Blazor Carousel component.",
                     Path = "carousel",
                     Icon = "\ue8eb",
-                    New = true,
                     Tags = new [] { "carousel", "gallery", "slide", "deck", "container" }
                 },
                 new Example
@@ -1471,9 +1460,10 @@ namespace RadzenBlazorDemos
                 },
                 new Example
                 {
-                    Toc = [ new () { Text = "Get and Set the value of CheckBoxList", Anchor = "#get-set-value" }, new () { Text = "Get and Set the value of CheckBoxList using Value and Change event", Anchor = "#value-and-change-event" }, new () { Text = "Set CheckBoxList orientation", Anchor = "#orientation" }, new () { Text = "Populate CheckBoxList items from data", Anchor = "#populate-items" }, new () { Text = "Statically declared and populated CheckBoxList items from data", Anchor = "#statically-declared" }, new () { Text = "Select all CheckBoxList items", Anchor = "#select-all-items" }, new () { Text = "Disabled CheckBoxList item", Anchor = "#disabled-item" }, new () { Text = "ReadOnly CheckBoxList item", Anchor = "#readonly-item" }, new () { Text = "Templated CheckBoxList item", Anchor = "#templated-item" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
+                    Toc = [ new () { Text = "Get and Set the value of CheckBoxList", Anchor = "#get-set-value" }, new () { Text = "Get and Set the value of CheckBoxList using Value and Change event", Anchor = "#value-and-change-event" }, new () { Text = "Set CheckBoxList orientation and layout", Anchor = "#orientation" }, new () { Text = "Populate CheckBoxList items from data", Anchor = "#populate-items" }, new () { Text = "Statically declared and populated CheckBoxList items from data", Anchor = "#statically-declared" }, new () { Text = "Select all CheckBoxList items", Anchor = "#select-all-items" }, new () { Text = "Disabled CheckBoxList item", Anchor = "#disabled-item" }, new () { Text = "ReadOnly CheckBoxList item", Anchor = "#readonly-item" }, new () { Text = "Templated CheckBoxList item", Anchor = "#templated-item" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
                     Name = "CheckBoxList",
                     Path = "checkboxlist",
+                    Updated = true,
                     Description = "Demonstration and configuration of the Radzen Blazor CheckBoxList component.",
                     Icon = "\ue6b1",
                     Tags = new [] { "form", "edit" }
@@ -1653,9 +1643,10 @@ namespace RadzenBlazorDemos
                 },
                 new Example
                 {
-                    Toc = [ new () { Text = "Get and Set the value of RadioButtonList", Anchor = "#get-set-value" }, new () { Text = "Get and Set the value of RadioButtonList using Value and Change event", Anchor = "#value-and-change-event" }, new () { Text = "Set RadioButtonList orientation", Anchor = "#orientation" }, new () { Text = "Populate RadioButtonList items from data", Anchor = "#populate-items" }, new () { Text = "Statically declared and populated RadioButtonList items from data", Anchor = "#populate-items-statically" }, new () { Text = "RadioButtonList with null value", Anchor = "#null-value" }, new () { Text = "Populate items programmatically and disable item", Anchor = "#populate-items-programmatically" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
+                    Toc = [ new () { Text = "Get and Set the value of RadioButtonList", Anchor = "#get-set-value" }, new () { Text = "Get and Set the value of RadioButtonList using Value and Change event", Anchor = "#value-and-change-event" }, new () { Text = "Set RadioButtonList orientation and layout", Anchor = "#orientation" }, new () { Text = "Populate RadioButtonList items from data", Anchor = "#populate-items" }, new () { Text = "Statically declared and populated RadioButtonList items from data", Anchor = "#populate-items-statically" }, new () { Text = "RadioButtonList with null value", Anchor = "#null-value" }, new () { Text = "Populate items programmatically and disable item", Anchor = "#populate-items-programmatically" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
                     Name = "RadioButtonList",
                     Path = "radiobuttonlist",
+                    Updated = true,
                     Description = "Demonstration and configuration of the Radzen Blazor radio button list component.",
                     Icon = "\ue837",
                     Tags = new [] { "toggle", "form", "edit" }
@@ -1675,7 +1666,6 @@ namespace RadzenBlazorDemos
                     Path = "security-code",
                     Description = "Demonstration and configuration of the Radzen Blazor SecurityCode component.",
                     Icon = "\uf045",
-                    New = true,
                     Tags = new [] { "security", "code", "input" }
                 },
                 new Example
@@ -1693,7 +1683,6 @@ namespace RadzenBlazorDemos
                     Toc = [ new () { Text = "Get and Set the value of Slider", Anchor = "#get-set-value" }, new () { Text = "Get and Set the value of Slider using Value and Change event", Anchor = "#value-and-change-event" }, new () { Text = "Slider from -100 to 100", Anchor = "#min-max-value" }, new () { Text = "Slider with Step=10", Anchor = "#step" }, new () { Text = "Range Slider", Anchor = "#range-slider" }, new () { Text = "Disabled Slider", Anchor = "#disabled-slider" }, new () { Text = "Vertical Slider", Anchor = "#vertical-slider" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
                     Name = "Slider",
                     Path = "slider",
-                    Updated = true,
                     Description = "Demonstration and configuration of the Radzen Blazor Slider component.",
                     Icon = "\ue429",
                     Tags = new [] { "form", "slider" }
@@ -1831,7 +1820,6 @@ namespace RadzenBlazorDemos
                         {
                             Name = "Line Chart",
                             Path = "line-chart",
-                            Updated = true,
                             Description = "Radzen Blazor Chart with line series.",
                             Tags = new [] { "chart", "graph", "line" }
                         },
@@ -1938,7 +1926,6 @@ namespace RadzenBlazorDemos
                 {
                     Name = "Sparkline",
                     Path = "sparkline",
-                    New = true,
                     Description = "Demonstration and configuration of RadzenSparkline component.",
                     Icon = "\uf64f",
                     Tags = new [] { "chart", "sparkline" }
@@ -2036,9 +2023,9 @@ namespace RadzenBlazorDemos
                 },
                 new Example
                 {
+                    Toc = [ new () { Text = "Severity", Anchor = "#severity" }, new () { Text = "Position", Anchor = "#position" }, new () { Text = "Custom click handler", Anchor = "#click-handler" }, new () { Text = "Custom content", Anchor = "#custom-content" }, new () { Text = "Duration progress", Anchor = "#duration-progress" } ],
                     Name = "Notification",
                     Path = "notification",
-                    Updated = true,
                     Description = "Demonstration and configuration of the Radzen Blazor Notification component.",
                     Icon = "\ue87f",
                     Tags = new [] { "message", "notification" }

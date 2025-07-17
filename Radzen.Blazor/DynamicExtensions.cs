@@ -1,5 +1,6 @@
 ﻿using Radzen;
 using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 
 namespace System.Linq.Dynamic.Core
 {
@@ -23,10 +24,14 @@ namespace System.Linq.Dynamic.Core
             {
                 if (parameters != null && !string.IsNullOrEmpty(predicate))
                 {
-                    for (var i = 0; i < parameters.Length; i++)
+                    predicate = Regex.Replace(predicate, @"@(\d+)", match =>
                     {
-                        object param = parameters[i];
-                        string value = param switch
+                        int index = int.Parse(match.Groups[1].Value);
+                        if (index >= parameters.Length)
+                            throw new InvalidOperationException($"No parameter provided for {match.Value}");
+
+                        object param = parameters[index];
+                        return param switch
                         {
                             string s when s == string.Empty => @"""""",
                             null => "null",
@@ -35,13 +40,11 @@ namespace System.Linq.Dynamic.Core
                             Guid g => $"Guid.Parse(\"{g}\")",
                             DateTime dt => $"DateTime.Parse(\"{dt:yyyy-MM-ddTHH:mm:ss.fffZ}\")",
                             DateTimeOffset dto => $"DateTime.Parse(\"{dto.UtcDateTime:yyyy-MM-ddTHH:mm:ss.fffZ}\")",
-                            DateOnly d => $"DateOnly.Parse(\"{d:yyy-MM-dd}\")",
+                            DateOnly d => $"DateOnly.Parse(\"{d:yyyy-MM-dd}\")",
                             TimeOnly t => $"TimeOnly.Parse(\"{t:HH:mm:ss}\")",
                             _ => param.ToString()
                         };
-
-                        predicate = predicate.Replace($"@{i}", $"{value}");
-                    }
+                    });
                 }
 
                 predicate = (predicate == "true" ? "" : predicate)
@@ -70,36 +73,7 @@ namespace System.Linq.Dynamic.Core
         {
             try
             {
-                selector = $"{selector}";
-
-                if (selector.Contains("=>"))
-                {
-                    var identifierName = selector.Split("=>")[0];
-
-                    selector = selector.Replace($"{identifierName}=>", "").Trim();
-
-                    string methodAsc = "OrderBy";
-                    string methodDesc = "OrderByDescending";
-
-                    Expression expression = source.Expression;
-
-                    foreach (var part in selector.Split(","))
-                    {
-                        var lambda = ExpressionParser.ParseLambda<T>($"{identifierName.Trim()} => {part}");
-
-                        expression = Expression.Call(
-                            typeof(Queryable), part.Trim().ToLower().Contains(" desc") ? methodDesc : methodAsc,
-                            new Type[] { source.ElementType, lambda.ReturnType },
-                            expression, Expression.Quote(lambda));
-
-                        methodAsc = "ThenBy";
-                        methodDesc = "ThenByDescending";
-                    }
-
-                    return (IOrderedQueryable<T>)source.Provider.CreateQuery(expression);
-                }
-
-                return (IOrderedQueryable<T>)QueryableExtension.OrderBy((IQueryable)source, selector);
+                return QueryableExtension.OrderBy(source, selector);
             }
             catch (Exception ex)
             {

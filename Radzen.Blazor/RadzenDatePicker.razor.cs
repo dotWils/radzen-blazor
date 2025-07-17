@@ -292,7 +292,7 @@ namespace Radzen.Blazor
         {
             year = Culture.Calendar.GetYear(new DateTime(year, 1, 1));
 
-            var date = new DateTime(year, 1, 1);
+            var date = new DateTime(year, 1, 1, Culture.Calendar);
 
             return date.ToString(YearFormat, Culture);
         }
@@ -1078,7 +1078,8 @@ namespace Radzen.Blazor
         /// Gets the field identifier.
         /// </summary>
         /// <value>The field identifier.</value>
-        public FieldIdentifier FieldIdentifier { get; private set; }
+        [Parameter]
+        public FieldIdentifier FieldIdentifier { get; set; }
 
         /// <summary>
         /// Gets or sets the value expression.
@@ -1161,8 +1162,8 @@ namespace Radzen.Blazor
 
             if (IsJSRuntimeAvailable)
             {
-                JSRuntime.InvokeVoidAsync("Radzen.destroyPopup", PopupID);
-                JSRuntime.InvokeVoidAsync("Radzen.destroyDatePicker", UniqueID, Element);
+                JSRuntime.InvokeVoid("Radzen.destroyPopup", PopupID);
+                JSRuntime.InvokeVoid("Radzen.destroyDatePicker", UniqueID, Element);
             }
         }
 

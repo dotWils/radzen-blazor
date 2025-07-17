@@ -616,7 +616,7 @@ $steps-number-background-color: var(--rz-base-600) !default;
 $steps-number-color: var(--rz-text-secondary-color) !default;
 
 .rz-steps {
-  [role='tablist'] {
+  > ul {
     display: flex;
   }
   .rz-steps-item {
@@ -882,7 +882,7 @@ $selectbar-selected-color: var(--rz-on-primary-lighter) !default;
 $selectbar-selected-border: var(--rz-border-base-600) !default;
 $selectbar-border-radius: var(--rz-border-radius) !default;
 
-.rz-selectbutton {
+.rz-selectbar {
   .rz-button {
     box-shadow: none;
     &:hover {
